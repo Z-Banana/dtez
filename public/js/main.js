@@ -171,6 +171,15 @@ updateCountdown();
   }, 100);
 
   audio.addEventListener('ended', () => {
+    isPlaying = false;
+    iconPlay.style.display = 'block';
+    iconPause.style.display = 'none';
+    vinyl.classList.remove('playing');
+    waves.classList.remove('playing');
+    progressFill.style.width = '0%';
+    progressHandle.style.left = '0%';
+    currentTimeEl.textContent = '0:00';
+  });
 
   // 上一首/下一首提示
   document.getElementById('btn-prev').addEventListener('click', () => {
