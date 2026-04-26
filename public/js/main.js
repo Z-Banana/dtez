@@ -379,10 +379,10 @@ window.addEventListener('scroll', () => {
   const navbar = document.querySelector('.navbar');
   const currentScroll = window.pageYOffset;
   if (currentScroll > 50) {
-    navbar.style.background = 'rgba(10, 6, 24, 0.9)';
-    navbar.style.boxShadow = '0 4px 30px rgba(0,0,0,0.3)';
+    navbar.style.background = 'rgba(255, 255, 255, 0.95)';
+    navbar.style.boxShadow = '0 4px 20px rgba(0,0,0,0.08)';
   } else {
-    navbar.style.background = 'rgba(10, 6, 24, 0.65)';
+    navbar.style.background = 'rgba(255, 255, 255, 0.85)';
     navbar.style.boxShadow = 'none';
   }
   lastScroll = currentScroll;
