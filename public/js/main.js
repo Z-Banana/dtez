@@ -147,9 +147,9 @@ updateCountdown();
     currentTimeEl.textContent = formatTime(audio.currentTime);
   });
 
-  audio.addEventListener('loadedmetadata', () => {
-    totalTimeEl.textContent = formatTime(audio.duration);
-  });
+  function updateDuration() {
+    if (audio.duration && !isNaN(audio.duration) && audio.duration !== Infinity) {
+      totalTim
 
   audio.addEventListener('ended', () => {
     isPlaying = false;
