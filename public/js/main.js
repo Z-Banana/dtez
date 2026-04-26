@@ -148,28 +148,29 @@ updateCountdown();
   });
 
   function updateDuration() {
-    if (audio.duration && !isNaN(audio.duration) && audio.duration !== Infinity) {
-      totalTim
+    const d = audio.duration;
+    if (d && d !== Infinity && !isNaN(d)) {
+      totalTimeEl.textContent = formatTime(d);
+      return true;
+    }
+    return false;
+  }
+
+  // 多个事件监听，确保一定能抓到时长
+  ['loadedmetadata', 'durationchange', 'canplay', 'canplaythrough'].forEach(evt => {
+    audio.addEventListener(evt, () => updateDuration());
+  });
+
+  // 如果音频已缓存，立即更新
+  if (audio.readyState >= 1) updateDuration();
+
+  // 兜底：轮询检查（某些浏览器loadedmetadata不可靠）
+  let checkCount = 0;
+  const checkInterval = setInterval(() => {
+    if (updateDuration() || ++checkCount > 30) clearInterval(checkInterval);
+  }, 100);
 
   audio.addEventListener('ended', () => {
-    isPlaying = false;
-    iconPlay.style.display = 'block';
-    iconPause.style.display = 'none';
-    vinyl.classList.remove('playing');
-    waves.classList.remove('playing');
-    progressFill.style.width = '0%';
-    progressHandle.style.left = '0%';
-    currentTimeEl.textContent = '0:00';
-  });
-
-  // 进度条拖动
-  progressBar.addEventListener('click', (e) => {
-    const rect = progressBar.getBoundingClientRect();
-    const pct = (e.clientX - rect.left) / rect.width;
-    if (audio.duration) {
-      audio.currentTime = pct * audio.duration;
-    }
-  });
 
   // 上一首/下一首提示
   document.getElementById('btn-prev').addEventListener('click', () => {
