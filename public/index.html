@@ -9,10 +9,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <!-- 粒子背景画布 -->
   <canvas id="particle-canvas"></canvas>
 
-  <!-- 导航栏 -->
   <nav class="navbar">
     <div class="nav-container">
       <div class="nav-brand">
@@ -21,8 +19,8 @@
       </div>
       <ul class="nav-menu">
         <li><a href="#countdown">倒计时</a></li>
-        <li><a href="#anthem">校歌</a></li>
         <li><a href="#blessings">祝福墙</a></li>
+        <li><a href="#anthem">校歌</a></li>
         <li><a href="history.html">校史</a></li>
         <li><a href="#" id="nav-more">更多</a></li>
       </ul>
@@ -32,50 +30,33 @@
     </div>
   </nav>
 
-  <!-- Hero 区域 -->
+  <!-- Hero -->
   <section class="hero" id="countdown">
     <div class="hero-content">
       <div class="hero-logo">
         <img src="logo.png" alt="大同二中校徽" onerror="this.style.display='none'">
       </div>
-      <div class="hero-badge">八十周年 校庆盛典</div>
+      <div class="hero-badge">🎊 校庆盛典</div>
       <h1 class="hero-title">
         <span class="title-main">大同市第二中学</span>
         <span class="title-sub">周年校庆</span>
       </h1>
-      <p class="hero-desc">薪火相传 80载· 砥砺前行 · 共谱华章</p>
-
-      <!-- 倒计时 -->
+      <p class="hero-desc">薪火相传 · 砥砺前行 · 共谱华章</p>
       <div class="countdown-container">
         <div class="countdown-label">距离校庆还有</div>
         <div class="countdown-timer">
-          <div class="countdown-item">
-            <span class="countdown-num" id="days">00</span>
-            <span class="countdown-unit">天</span>
-          </div>
+          <div class="countdown-item"><span class="countdown-num" id="days">00</span><span class="countdown-unit">天</span></div>
           <div class="countdown-sep">:</div>
-          <div class="countdown-item">
-            <span class="countdown-num" id="hours">00</span>
-            <span class="countdown-unit">时</span>
-          </div>
+          <div class="countdown-item"><span class="countdown-num" id="hours">00</span><span class="countdown-unit">时</span></div>
           <div class="countdown-sep">:</div>
-          <div class="countdown-item">
-            <span class="countdown-num" id="minutes">00</span>
-            <span class="countdown-unit">分</span>
-          </div>
+          <div class="countdown-item"><span class="countdown-num" id="minutes">00</span><span class="countdown-unit">分</span></div>
           <div class="countdown-sep">:</div>
-          <div class="countdown-item">
-            <span class="countdown-num" id="seconds">00</span>
-            <span class="countdown-unit">秒</span>
-          </div>
+          <div class="countdown-item"><span class="countdown-num" id="seconds">00</span><span class="countdown-unit">秒</span></div>
         </div>
       </div>
-
       <a href="#blessings" class="hero-cta">
         <span>送上祝福</span>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M7 17L17 7M17 7H7M17 7V17"/>
-        </svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
       </a>
     </div>
     <div class="scroll-indicator">
@@ -84,62 +65,7 @@
     </div>
   </section>
 
-  <!-- 校歌播放器 -->
-  <section class="section anthem-section" id="anthem">
-    <div class="container">
-      <div class="section-header">
-        <span class="section-tag">Music</span>
-        <h2 class="section-title">校歌播放器</h2>
-        <p class="section-desc">聆听校歌，感受二中人共同的记忆与荣光</p>
-      </div>
-
-      <div class="player-card">
-        <div class="player-visual">
-          <div class="vinyl-record" id="vinyl">
-            <div class="vinyl-label">
-              <img src="logo.png" alt="校徽" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23e8b94b%22/><text x=%2250%22 y=%2255%22 text-anchor=%22middle%22 fill=%22%23fff%22 font-size=%2214%22 font-family=%22serif%22>二中</text></svg>'">
-            </div>
-          </div>
-          <div class="sound-waves" id="sound-waves">
-            <span></span><span></span><span></span><span></span><span></span>
-          </div>
-        </div>
-
-        <div class="player-info">
-          <h3 class="song-title">大同市第二中学校歌</h3>
-        </div>
-
-        <div class="player-progress">
-          <span class="time-current" id="current-time">0:00</span>
-          <div class="progress-bar" id="progress-bar">
-            <div class="progress-fill" id="progress-fill"></div>
-            <div class="progress-handle" id="progress-handle"></div>
-          </div>
-          <span class="time-total" id="total-time">0:00</span>
-        </div>
-
-        <div class="player-controls">
-          <button class="ctrl-btn" id="btn-prev" title="上一首">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
-          </button>
-          <button class="ctrl-btn play-btn" id="btn-play" title="播放/暂停">
-            <svg id="icon-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-            <svg id="icon-pause" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-          </button>
-          <button class="ctrl-btn" id="btn-next" title="下一首">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
-          </button>
-        </div>
-
-        <audio id="audio-player" preload="metadata">
-          <source src="anthem.mp3" type="audio/mpeg">
-          您的浏览器不支持音频播放，请上传校歌音频文件（命名为 anthem.mp3）
-        </audio>
-      </div>
-    </div>
-  </section>
-
-  <!-- 祝福墙 -->
+  <!-- 祝福墙（移到校歌前面） -->
   <section class="section blessings-section" id="blessings">
     <div class="container">
       <div class="section-header">
@@ -147,9 +73,7 @@
         <h2 class="section-title">校庆祝福墙</h2>
         <p class="section-desc">留下你的祝福，与万千校友共庆母校华诞</p>
       </div>
-
       <div class="blessings-layout">
-        <!-- 发送祝福表单 -->
         <div class="blessing-form-card">
           <div class="form-header">
             <div class="form-icon">✍️</div>
@@ -171,24 +95,62 @@
             </button>
           </form>
         </div>
-
-        <!-- 祝福列表 -->
         <div class="blessings-list-card">
           <div class="list-header">
             <h3>💌 最新祝福</h3>
             <button class="refresh-btn" id="refresh-btn" title="刷新">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
-              </svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
             </button>
           </div>
           <div class="blessings-list" id="blessings-list">
-            <div class="loading-state">
-              <div class="spinner"></div>
-              <p>正在加载祝福...</p>
-            </div>
+            <div class="loading-state"><div class="spinner"></div><p>正在加载祝福...</p></div>
           </div>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 校歌播放器 -->
+  <section class="section anthem-section" id="anthem">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Music</span>
+        <h2 class="section-title">校歌播放器</h2>
+        <p class="section-desc">聆听校歌，感受二中人共同的记忆与荣光</p>
+      </div>
+      <div class="player-card">
+        <div class="player-visual">
+          <div class="vinyl-record" id="vinyl">
+            <div class="vinyl-label">
+              <img src="logo.png" alt="校徽" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23d4380d%22/><text x=%2250%22 y=%2255%22 text-anchor=%22middle%22 fill=%22%23fff%22 font-size=%2214%22 font-family=%22serif%22>二中</text></svg>'">
+            </div>
+          </div>
+          <div class="sound-waves" id="sound-waves"><span></span><span></span><span></span><span></span><span></span></div>
+        </div>
+        <div class="player-info">
+          <h3 class="song-title">大同市第二中学校歌</h3>
+          <p class="song-artist">大同二中合唱团</p>
+        </div>
+        <div class="player-progress">
+          <span class="time-current" id="current-time">0:00</span>
+          <div class="progress-bar" id="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+            <div class="progress-handle" id="progress-handle"></div>
+          </div>
+          <span class="time-total" id="total-time">0:00</span>
+        </div>
+        <div class="player-controls">
+          <button class="ctrl-btn" id="btn-prev" title="上一首"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+          <button class="ctrl-btn play-btn" id="btn-play" title="播放/暂停">
+            <svg id="icon-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            <svg id="icon-pause" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+          </button>
+          <button class="ctrl-btn" id="btn-next" title="下一首"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
+        </div>
+        <audio id="audio-player" preload="metadata">
+          <source src="anthem.mp3" type="audio/mpeg">
+          您的浏览器不支持音频播放，请上传校歌音频文件（命名为 anthem.mp3）
+        </audio>
       </div>
     </div>
   </section>
@@ -203,17 +165,13 @@
           <p>追溯大同二中的光辉历程，从创校之初到如今的辉煌成就，每一个重要时刻都铭刻着二中人奋斗的足迹。</p>
           <a href="history.html" class="history-btn">
             <span>浏览校史</span>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           </a>
         </div>
         <div class="history-visual">
           <div class="timeline-preview">
-            <div class="tl-dot"></div>
-            <div class="tl-line"></div>
-            <div class="tl-dot"></div>
-            <div class="tl-line"></div>
+            <div class="tl-dot"></div><div class="tl-line"></div>
+            <div class="tl-dot"></div><div class="tl-line"></div>
             <div class="tl-dot active"></div>
           </div>
         </div>
@@ -228,12 +186,10 @@
         <img src="logo.png" alt="校徽" class="footer-logo" onerror="this.style.display='none'">
         <span>大同市第二中学</span>
       </div>
-      <p class="footer-copy">明德至善 · 博学笃行</p>
+      <p class="footer-copy">薪火相传 · 桃李芬芳</p>
       <button class="more-btn" id="more-btn">
         <span>更多</span>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>
-        </svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
       </button>
     </div>
   </footer>
@@ -244,42 +200,210 @@
       <button class="modal-close" id="modal-close">&times;</button>
       <div class="modal-header">
         <div class="modal-icon">
-          <img src="logo.png" alt="校徽" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid rgba(232,185,75,0.3);padding:3px;background:rgba(255,255,255,0.05);" onerror="this.style.display='none';this.parentElement.textContent='ℹ️'">
+          <img src="logo.png" alt="校徽" onerror="this.style.display='none';this.parentElement.textContent='ℹ️'">
         </div>
         <h3>关于本站</h3>
       </div>
       <div class="modal-body">
-        <div class="info-item">
-          <span class="info-label">网站版本</span>
-          <span class="info-value">v2.5.0</span>
-        </div>
-        <div class="info-item">
-          <span class="info-label">制作人</span>
-          <span class="info-value">张钊</span>
-        </div>
-        <div class="info-item">
-          <span class="info-label">制作时间</span>
-          <span class="info-value">2026年</span>
-        </div>
-        <div class="info-item">
-          <span class="info-label">学校</span>
-          <span class="info-value">大同市第二中学</span>
-        </div>
-        <div class="info-item">
-          <span class="info-label">技术栈</span>
-          <span class="info-value">Node.js + Express + Turso + HTML5</span>
-        </div>
-        <div class="info-item">
-          <span class="info-label">部署平台</span>
-          <span class="info-value">Pxxl App</span>
+        <div class="info-item"><span class="info-label">网站版本</span><span class="info-value">v2.6</span></div>
+        <div class="info-item"><span class="info-label">制作人</span><span class="info-value">（请在此处补充你的名字）</span></div>
+        <div class="info-item"><span class="info-label">制作时间</span><span class="info-value">2026年</span></div>
+        <div class="info-item"><span class="info-label">学校</span><span class="info-value">大同市第二中学</span></div>
+        <div class="info-item"><span class="info-label">技术栈</span><span class="info-value">Node.js + Express + Turso + HTML5</span></div>
+        <div class="info-item"><span class="info-label">部署平台</span><span class="info-value">Pxxl App</span></div>
+        <div class="info-divider"></div>
+        <div class="modal-actions">
+          <button class="modal-action-btn" id="btn-suggest">💡 提交建议</button>
+          <button class="modal-action-btn" id="btn-changelog">📋 更新日志</button>
+          <button class="modal-action-btn" id="btn-admin">🔐 后台管理</button>
         </div>
         <div class="info-divider"></div>
-        <p class="modal-note">🎉 感谢访问大同二中校庆网站！<br>如有问题请联系 AI编程社 或 582张钊。</p>
+        <p class="modal-note">🎉 感谢访问大同二中校庆网站！<br>如有问题请联系制作团队。</p>
       </div>
     </div>
   </div>
 
-  <!-- 提示消息 -->
+  <!-- 提交建议 模态框 -->
+  <div class="modal-overlay" id="suggest-overlay">
+    <div class="modal">
+      <button class="modal-close" id="suggest-close">&times;</button>
+      <div class="modal-header">
+        <div class="modal-icon">💡</div>
+        <h3>提交建议</h3>
+      </div>
+      <div class="modal-body">
+        <p class="modal-note" style="margin-bottom:20px;">您对网站有任何建议或想法？欢迎告诉我们！</p>
+        <form id="suggest-form">
+          <div class="form-group">
+            <label>您的姓名</label>
+            <input type="text" id="s-name" placeholder="请输入姓名" maxlength="20" required>
+          </div>
+          <div class="form-group">
+            <label>联系方式（选填）</label>
+            <input type="text" id="s-contact" placeholder="邮箱 / 微信 / QQ" maxlength="50">
+          </div>
+          <div class="form-group">
+            <label>建议内容</label>
+            <textarea id="s-content" placeholder="请详细描述您的建议..." maxlength="500" rows="4" required></textarea>
+            <span class="char-count"><span id="s-char-count">0</span>/500</span>
+          </div>
+          <button type="submit" class="submit-btn" id="s-submit-btn">
+            <span class="btn-text">提交建议</span>
+            <span class="btn-loader" style="display:none"></span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 更新日志 模态框 -->
+  <div class="modal-overlay" id="changelog-overlay">
+    <div class="modal" style="max-width:520px;">
+      <button class="modal-close" id="changelog-close">&times;</button>
+      <div class="modal-header">
+        <div class="modal-icon">📋</div>
+        <h3>更新日志</h3>
+      </div>
+      <div class="modal-body">
+        <div class="changelog-list" id="changelog-list">
+          <div class="changelog-item">
+            <div class="changelog-version">v2.6 <span class="changelog-date">2026-04-30</span></div>
+            <ul>
+              <li>新增后台管理界面，支持查看和管理祝福墙、建议</li>
+              <li>新增"提交建议"和"更新日志"功能</li>
+              <li>新增实时在线人数统计</li>
+              <li>调整祝福墙到校歌播放器之前</li>
+            </ul>
+          </div>
+          <div class="changelog-item">
+            <div class="changelog-version">v2.5 <span class="changelog-date">2026-04-26</span></div>
+            <ul>
+              <li>全新亮色喜庆主题（中国红 + 暖白）</li>
+              <li>优化导航栏滚动效果</li>
+            </ul>
+          </div>
+          <div class="changelog-item">
+            <div class="changelog-version">v2.4 <span class="changelog-date">2026-04-26</span></div>
+            <ul>
+              <li>修复 Alpine Linux 兼容性问题</li>
+              <li>升级 @libsql/client 至 0.15.x 稳定版</li>
+              <li>新增 /health 健康检查端点</li>
+            </ul>
+          </div>
+          <div class="changelog-item">
+            <div class="changelog-version">v2.3 <span class="changelog-date">2026-04-26</span></div>
+            <ul>
+              <li>尝试更换 Turso 驱动解决部署问题</li>
+            </ul>
+          </div>
+          <div class="changelog-item">
+            <div class="changelog-version">v2.2 <span class="changelog-date">2026-04-26</span></div>
+            <ul>
+              <li>修复数据库初始化逻辑，数据不再丢失</li>
+              <li>智能检测表结构，自动迁移旧数据</li>
+            </ul>
+          </div>
+          <div class="changelog-item">
+            <div class="changelog-version">v2.1 <span class="changelog-date">2026-04-26</span></div>
+            <ul>
+              <li>修复播放器音频检测逻辑</li>
+              <li>首页中央上方显示校徽</li>
+              <li>"更多"模态框显示校徽</li>
+            </ul>
+          </div>
+          <div class="changelog-item">
+            <div class="changelog-version">v2.0 <span class="changelog-date">2026-04-26</span></div>
+            <ul>
+              <li>修复数据库列名冲突（name → author_name）</li>
+              <li>全新惊艳主题设计</li>
+              <li>新增导航栏"更多"入口</li>
+              <li>修复"送上祝福"与滚动指示器重叠</li>
+            </ul>
+          </div>
+          <div class="changelog-item">
+            <div class="changelog-version">v1.0 <span class="changelog-date">2026-04-24</span></div>
+            <ul>
+              <li>校庆网站初始版本</li>
+              <li>包含倒计时、校歌播放器、祝福墙、校史入口</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 后台登录 模态框 -->
+  <div class="modal-overlay" id="admin-login-overlay">
+    <div class="modal" style="max-width:380px;">
+      <button class="modal-close" id="admin-login-close">&times;</button>
+      <div class="modal-header">
+        <div class="modal-icon">🔐</div>
+        <h3>管理员登录</h3>
+      </div>
+      <div class="modal-body">
+        <form id="admin-login-form">
+          <div class="form-group">
+            <label>管理员账号</label>
+            <input type="text" id="admin-user" placeholder="请输入账号" required>
+          </div>
+          <div class="form-group">
+            <label>密码</label>
+            <input type="password" id="admin-pass" placeholder="请输入密码" required>
+          </div>
+          <button type="submit" class="submit-btn">登录</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 后台管理面板 -->
+  <div class="modal-overlay" id="admin-panel-overlay">
+    <div class="modal" style="max-width:900px; width:95%;">
+      <button class="modal-close" id="admin-panel-close">&times;</button>
+      <div class="modal-header">
+        <div class="modal-icon">🛡️</div>
+        <h3>后台管理</h3>
+      </div>
+      <div class="modal-body">
+        <div class="admin-stats">
+          <div class="admin-stat-card">
+            <div class="admin-stat-num" id="stat-blessings">0</div>
+            <div class="admin-stat-label">祝福总数</div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-num" id="stat-suggestions">0</div>
+            <div class="admin-stat-label">建议总数</div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-num" id="stat-online">0</div>
+            <div class="admin-stat-label">实时在线</div>
+          </div>
+        </div>
+        <div class="admin-tabs">
+          <button class="admin-tab active" data-tab="blessings">祝福墙管理</button>
+          <button class="admin-tab" data-tab="suggestions">建议管理</button>
+        </div>
+        <div class="admin-tab-content active" id="tab-blessings">
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead><tr><th>ID</th><th>姓名</th><th>祝福内容</th><th>时间</th><th>操作</th></tr></thead>
+              <tbody id="admin-blessings-body"><tr><td colspan="5" class="admin-empty">加载中...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="admin-tab-content" id="tab-suggestions">
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead><tr><th>ID</th><th>姓名</th><th>联系方式</th><th>建议内容</th><th>时间</th><th>操作</th></tr></thead>
+              <tbody id="admin-suggestions-body"><tr><td colspan="6" class="admin-empty">加载中...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
   <div class="toast" id="toast">
     <span class="toast-icon" id="toast-icon">✓</span>
     <span class="toast-msg" id="toast-msg">操作成功</span>

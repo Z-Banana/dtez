@@ -7,140 +7,196 @@ const app = express();
 app.use(express.json());
 app.use(express.static('public'));
 
-// ===== 环境变量检查 =====
 const DB_URL = process.env.TURSO_DATABASE_URL;
 const DB_TOKEN = process.env.TURSO_AUTH_TOKEN;
 
 if (!DB_URL || !DB_TOKEN) {
   console.error('❌ 缺少环境变量：TURSO_DATABASE_URL 或 TURSO_AUTH_TOKEN');
-  console.error('   请在 Pxxl 环境变量设置中配置这两个变量');
   process.exit(1);
 }
 
-// ===== 创建 Turso 客户端 =====
 let client;
 try {
-  client = createClient({
-    url: DB_URL,
-    authToken: DB_TOKEN,
-  });
+  client = createClient({ url: DB_URL, authToken: DB_TOKEN });
   console.log('✅ Turso 客户端创建成功');
 } catch (err) {
   console.error('❌ Turso 客户端创建失败:', err.message);
   process.exit(1);
 }
 
-// ===== 数据库初始化 =====
 let dbReady = false;
 
 async function initDb() {
   try {
-    // 检查 blessings 表是否存在
     const tableCheck = await client.execute(
       "SELECT name FROM sqlite_master WHERE type='table' AND name='blessings'"
     );
-
     if (tableCheck.rows.length === 0) {
-      await client.execute(`
-        CREATE TABLE blessings (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          author_name TEXT NOT NULL,
-          message TEXT NOT NULL,
-          created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )
-      `);
-      console.log('✅ 数据库表创建成功');
-    } else {
-      try {
-        await client.execute('SELECT author_name, message FROM blessings LIMIT 1');
-        console.log('✅ 数据库表结构正确，数据已保留');
-      } catch (colErr) {
-        console.log('🔄 检测到旧表结构，正在迁移数据...');
-        await client.execute('ALTER TABLE blessings RENAME TO blessings_old');
-        await client.execute(`
-          CREATE TABLE blessings (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            author_name TEXT NOT NULL,
-            message TEXT NOT NULL,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-          )
-        `);
-        try {
-          await client.execute(`
-            INSERT INTO blessings (id, author_name, message, created_at)
-            SELECT id, name, content, created_at FROM blessings_old
-          `);
-          const count = await client.execute('SELECT COUNT(*) as cnt FROM blessings');
-          console.log('✅ 数据迁移成功，共迁移 ' + count.rows[0].cnt + ' 条祝福');
-        } catch (migrateErr) {
-          console.log('⚠️ 自动迁移失败:', migrateErr.message);
-        }
-        try {
-          await client.execute('DROP TABLE blessings_old');
-        } catch (e) { /* 忽略 */ }
-      }
+      await client.execute(`CREATE TABLE blessings (id INTEGER PRIMARY KEY AUTOINCREMENT, author_name TEXT NOT NULL, message TEXT NOT NULL, created_at TEXT DEFAULT CURRENT_TIMESTAMP)`);
+    }
+    const suggestionsCheck = await client.execute(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='suggestions'"
+    );
+    if (suggestionsCheck.rows.length === 0) {
+      await client.execute(`CREATE TABLE suggestions (id INTEGER PRIMARY KEY AUTOINCREMENT, author_name TEXT NOT NULL, contact TEXT, content TEXT NOT NULL, created_at TEXT DEFAULT CURRENT_TIMESTAMP)`);
+      console.log('✅ suggestions 表创建成功');
     }
     dbReady = true;
+    console.log('✅ 数据库初始化完成');
   } catch (err) {
     console.error('❌ 数据库初始化失败:', err.message);
   }
 }
-
 initDb();
 
-// ===== 健康检查端点 =====
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'ok',
-    dbReady: dbReady,
-    uptime: process.uptime(),
-    timestamp: new Date().toISOString()
-  });
+// ===== 在线人数统计（用 Set 去重，基于 IP） =====
+const onlineIPs = new Map(); // ip -> lastPingTime
+const ONLINE_TIMEOUT = 60000;
+
+function cleanupOnline() {
+  const now = Date.now();
+  for (const [ip, lastPing] of onlineIPs) {
+    if (now - lastPing > ONLINE_TIMEOUT) onlineIPs.delete(ip);
+  }
+}
+setInterval(cleanupOnline, 30000);
+
+app.get('/api/online', (req, res) => {
+  cleanupOnline();
+  res.json({ count: onlineIPs.size });
 });
 
-// ===== API: 获取所有祝福 =====
+app.post('/api/ping', (req, res) => {
+  // 用 IP 作为唯一标识，避免一个浏览器产生多个 token
+  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+  onlineIPs.set(ip, Date.now());
+  res.json({ ok: true });
+});
+
+// ===== 健康检查 =====
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', dbReady, uptime: process.uptime(), timestamp: new Date().toISOString() });
+});
+
+// ===== 祝福墙 API（时区修复：用北京时间） =====
 app.get('/api/blessings', async (req, res) => {
-  if (!dbReady || !client) {
-    return res.status(503).json({ success: false, error: '数据库尚未就绪' });
-  }
+  if (!dbReady) return res.status(503).json({ success: false, error: '数据库尚未就绪' });
   try {
     const result = await client.execute('SELECT * FROM blessings ORDER BY created_at DESC');
     res.json({ success: true, data: result.rows || [] });
   } catch (err) {
-    console.error('获取祝福失败:', err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// ===== API: 发送祝福 =====
 app.post('/api/blessings', async (req, res) => {
-  if (!dbReady || !client) {
-    return res.status(503).json({ success: false, error: '数据库尚未就绪' });
-  }
-
+  if (!dbReady) return res.status(503).json({ success: false, error: '数据库尚未就绪' });
   const { author_name, message } = req.body;
-  if (!author_name || !message) {
-    return res.status(400).json({ success: false, error: '姓名和祝福内容不能为空' });
-  }
-  if (author_name.length > 20 || message.length > 200) {
-    return res.status(400).json({ success: false, error: '姓名不超过20字，祝福不超过200字' });
-  }
-
+  if (!author_name || !message) return res.status(400).json({ success: false, error: '不能为空' });
+  if (author_name.length > 20 || message.length > 200) return res.status(400).json({ success: false, error: '超限' });
   try {
+    // 使用北京时间（UTC+8）
+    const now = new Date();
+    const bjTime = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+    const timeStr = bjTime.toISOString().replace('T', ' ').slice(0, 19);
     await client.execute({
-      sql: 'INSERT INTO blessings (author_name, message) VALUES (?, ?)',
-      args: [author_name.trim(), message.trim()]
+      sql: 'INSERT INTO blessings (author_name, message, created_at) VALUES (?, ?, ?)',
+      args: [author_name.trim(), message.trim(), timeStr]
     });
     res.json({ success: true, message: '祝福发送成功！' });
   } catch (err) {
-    console.error('发送祝福失败:', err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// ===== 启动服务器 =====
+// ===== 建议 API（时区修复） =====
+app.get('/api/suggestions', async (req, res) => {
+  if (!dbReady) return res.status(503).json({ success: false, error: '数据库尚未就绪' });
+  try {
+    const result = await client.execute('SELECT * FROM suggestions ORDER BY created_at DESC');
+    res.json({ success: true, data: result.rows || [] });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/suggestions', async (req, res) => {
+  if (!dbReady) return res.status(503).json({ success: false, error: '数据库尚未就绪' });
+  const { author_name, contact, content } = req.body;
+  if (!author_name || !content) return res.status(400).json({ success: false, error: '姓名和建议内容不能为空' });
+  if (author_name.length > 20 || content.length > 500) return res.status(400).json({ success: false, error: '姓名不超过20字，建议不超过500字' });
+  try {
+    const now = new Date();
+    const bjTime = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+    const timeStr = bjTime.toISOString().replace('T', ' ').slice(0, 19);
+    await client.execute({
+      sql: 'INSERT INTO suggestions (author_name, contact, content, created_at) VALUES (?, ?, ?, ?)',
+      args: [author_name.trim(), (contact || '').trim(), content.trim(), timeStr]
+    });
+    res.json({ success: true, message: '建议提交成功！感谢您的反馈' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ===== 管理员 API =====
+const ADMIN_USER = 'dtez';
+const ADMIN_PASS = 'zhangzhao';
+
+app.post('/api/admin/login', (req, res) => {
+  const { username, password } = req.body;
+  if (username === ADMIN_USER && password === ADMIN_PASS) {
+    res.json({ success: true, token: 'admin-dtez-2026' });
+  } else {
+    res.status(401).json({ success: false, error: '用户名或密码错误' });
+  }
+});
+
+app.get('/api/admin/blessings', async (req, res) => {
+  const auth = req.headers['x-admin-token'];
+  if (auth !== 'admin-dtez-2026') return res.status(403).json({ success: false, error: '未授权' });
+  try {
+    const result = await client.execute('SELECT * FROM blessings ORDER BY created_at DESC');
+    res.json({ success: true, data: result.rows || [] });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.delete('/api/admin/blessings/:id', async (req, res) => {
+  const auth = req.headers['x-admin-token'];
+  if (auth !== 'admin-dtez-2026') return res.status(403).json({ success: false, error: '未授权' });
+  try {
+    await client.execute({ sql: 'DELETE FROM blessings WHERE id = ?', args: [req.params.id] });
+    res.json({ success: true, message: '删除成功' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/admin/suggestions', async (req, res) => {
+  const auth = req.headers['x-admin-token'];
+  if (auth !== 'admin-dtez-2026') return res.status(403).json({ success: false, error: '未授权' });
+  try {
+    const result = await client.execute('SELECT * FROM suggestions ORDER BY created_at DESC');
+    res.json({ success: true, data: result.rows || [] });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.delete('/api/admin/suggestions/:id', async (req, res) => {
+  const auth = req.headers['x-admin-token'];
+  if (auth !== 'admin-dtez-2026') return res.status(403).json({ success: false, error: '未授权' });
+  try {
+    await client.execute({ sql: 'DELETE FROM suggestions WHERE id = ?', args: [req.params.id] });
+    res.json({ success: true, message: '删除成功' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🎉 大同二中校庆网站运行在 http://localhost:${PORT}`);
-  console.log(`   健康检查: http://localhost:${PORT}/health`);
 });

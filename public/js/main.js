@@ -1,5 +1,12 @@
 // ===== 配置 =====
-const ANNIVERSARY_DATE = new Date('2026-10-01T00:00:00').getTime(); // 请修改为你的校庆日期
+const ANNIVERSARY_DATE = new Date('2026-10-01T00:00:00').getTime();
+
+// 客户端唯一标识（用于在线人数统计）
+let clientToken = localStorage.getItem('clientToken');
+if (!clientToken) {
+  clientToken = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  localStorage.setItem('clientToken', clientToken);
+}
 
 // ===== 粒子背景 =====
 (function initParticles() {
@@ -17,9 +24,7 @@ const ANNIVERSARY_DATE = new Date('2026-10-01T00:00:00').getTime(); // 请修改
   window.addEventListener('resize', resize);
 
   class Particle {
-    constructor() {
-      this.reset();
-    }
+    constructor() { this.reset(); }
     reset() {
       this.x = Math.random() * w;
       this.y = Math.random() * h;
@@ -27,13 +32,7 @@ const ANNIVERSARY_DATE = new Date('2026-10-01T00:00:00').getTime(); // 请修改
       this.speedX = (Math.random() - 0.5) * 0.3;
       this.speedY = (Math.random() - 0.5) * 0.3;
       this.opacity = Math.random() * 0.6 + 0.1;
-      // 金色 + 少量彩色粒子
-      const colors = [
-        '232, 185, 75',   // 金
-        '255, 107, 107',  // 红
-        '78, 205, 196',   // 青
-        '255, 255, 255'   // 白
-      ];
+      const colors = ['232, 185, 75', '255, 107, 107', '78, 205, 196', '255, 255, 255'];
       this.color = colors[Math.floor(Math.random() * colors.length)];
     }
     update() {
@@ -63,20 +62,14 @@ const ANNIVERSARY_DATE = new Date('2026-10-01T00:00:00').getTime(); // 请修改
 function updateCountdown() {
   const now = Date.now();
   const diff = ANNIVERSARY_DATE - now;
-
   if (diff <= 0) {
-    document.getElementById('days').textContent = '00';
-    document.getElementById('hours').textContent = '00';
-    document.getElementById('minutes').textContent = '00';
-    document.getElementById('seconds').textContent = '00';
+    ['days','hours','minutes','seconds'].forEach(id => document.getElementById(id).textContent = '00');
     return;
   }
-
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
   const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
   const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
   document.getElementById('days').textContent = String(days).padStart(2, '0');
   document.getElementById('hours').textContent = String(hours).padStart(2, '0');
   document.getElementById('minutes').textContent = String(minutes).padStart(2, '0');
@@ -105,15 +98,14 @@ updateCountdown();
   let isDragging = false;
 
   function formatTime(s) {
-    if (isNaN(s)) return '0:00';
+    if (!s || isNaN(s) || s === Infinity) return '0:00';
     const m = Math.floor(s / 60);
     const sec = Math.floor(s % 60);
     return `${m}:${String(sec).padStart(2, '0')}`;
   }
 
   function togglePlay() {
-    // 检查是否有音频源（通过source标签或src属性）
-    const hasSource = audio.querySelector('source') || audio.src;
+    const hasSource = audio.querySelector('source') || (audio.src && audio.src !== window.location.href);
     if (!hasSource) {
       showToast('请先上传校歌音频文件（anthem.mp3）', '⚠️');
       return;
@@ -126,9 +118,7 @@ updateCountdown();
       vinyl.classList.remove('playing');
       waves.classList.remove('playing');
     } else {
-      audio.play().catch(() => {
-        showToast('音频播放失败，请检查文件是否存在', '⚠️');
-      });
+      audio.play().catch(() => showToast('音频播放失败', '⚠️'));
       isPlaying = true;
       iconPlay.style.display = 'none';
       iconPause.style.display = 'block';
@@ -140,13 +130,14 @@ updateCountdown();
   btnPlay.addEventListener('click', togglePlay);
 
   audio.addEventListener('timeupdate', () => {
-    if (isDragging) return;
+    if (isDragging || !audio.duration) return;
     const pct = (audio.currentTime / audio.duration) * 100;
     progressFill.style.width = pct + '%';
     progressHandle.style.left = pct + '%';
     currentTimeEl.textContent = formatTime(audio.currentTime);
   });
 
+  // 总时长获取
   function updateDuration() {
     const d = audio.duration;
     if (d && d !== Infinity && !isNaN(d)) {
@@ -156,15 +147,12 @@ updateCountdown();
     return false;
   }
 
-  // 多个事件监听，确保一定能抓到时长
   ['loadedmetadata', 'durationchange', 'canplay', 'canplaythrough'].forEach(evt => {
     audio.addEventListener(evt, () => updateDuration());
   });
 
-  // 如果音频已缓存，立即更新
   if (audio.readyState >= 1) updateDuration();
 
-  // 兜底：轮询检查（某些浏览器loadedmetadata不可靠）
   let checkCount = 0;
   const checkInterval = setInterval(() => {
     if (updateDuration() || ++checkCount > 30) clearInterval(checkInterval);
@@ -181,14 +169,73 @@ updateCountdown();
     currentTimeEl.textContent = '0:00';
   });
 
-  // 上一首/下一首提示
-  document.getElementById('btn-prev').addEventListener('click', () => {
-    showToast('当前只有一首校歌', 'ℹ️');
+  // ===== 进度条拖动（修复版）=====
+  function seekTo(clientX) {
+    const rect = progressBar.getBoundingClientRect();
+    let pct = (clientX - rect.left) / rect.width;
+    pct = Math.max(0, Math.min(1, pct));
+    if (audio.duration && isFinite(audio.duration)) {
+      audio.currentTime = pct * audio.duration;
+      progressFill.style.width = (pct * 100) + '%';
+      progressHandle.style.left = (pct * 100) + '%';
+    }
+  }
+
+  progressBar.addEventListener('click', (e) => {
+    seekTo(e.clientX);
   });
-  document.getElementById('btn-next').addEventListener('click', () => {
-    showToast('当前只有一首校歌', 'ℹ️');
+
+  // 鼠标拖动
+  progressBar.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    seekTo(e.clientX);
   });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    seekTo(e.clientX);
+  });
+
+  document.addEventListener('mouseup', () => {
+    isDragging = false;
+  });
+
+  // 触摸拖动（移动端）
+  progressBar.addEventListener('touchstart', (e) => {
+    isDragging = true;
+    seekTo(e.touches[0].clientX);
+  }, { passive: false });
+
+  document.addEventListener('touchmove', (e) => {
+    if (!isDragging) return;
+    seekTo(e.touches[0].clientX);
+  }, { passive: false });
+
+  document.addEventListener('touchend', () => {
+    isDragging = false;
+  });
+
+  document.getElementById('btn-prev').addEventListener('click', () => showToast('当前只有一首校歌', 'ℹ️'));
+  document.getElementById('btn-next').addEventListener('click', () => showToast('当前只有一首校歌', 'ℹ️'));
 })();
+
+// ===== 时区转换工具 =====
+function toChinaTime(isoString) {
+  if (!isoString) return '';
+  const date = new Date(isoString);
+  // 转为北京时间 (UTC+8)
+  return new Date(date.getTime() + (8 * 60 * 60 * 1000));
+}
+
+function formatChinaTime(isoString) {
+  const d = toChinaTime(isoString);
+  return `${d.getMonth()+1}月${d.getDate()}日 ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+function formatChinaDateShort(isoString) {
+  const d = toChinaTime(isoString);
+  return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
 
 // ===== 祝福墙 =====
 const blessingsList = document.getElementById('blessings-list');
@@ -200,39 +247,21 @@ async function loadBlessings() {
     blessingsList.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>正在加载祝福...</p></div>';
     const res = await fetch('/api/blessings');
     const data = await res.json();
-
     if (!data.success || !data.data || data.data.length === 0) {
-      blessingsList.innerHTML = `
-        <div class="empty-state">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
-          </svg>
-          <p>还没有祝福，来做第一个留言的人吧！</p>
-        </div>`;
+      blessingsList.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><p>还没有祝福，来做第一个留言的人吧！</p></div>';
       return;
     }
-
     blessingsList.innerHTML = '';
     data.data.forEach((item, index) => {
-      const date = new Date(item.created_at);
-      const timeStr = `${date.getMonth()+1}月${date.getDate()}日 ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
+      const timeStr = formatChinaTime(item.created_at);
       const div = document.createElement('div');
       div.className = 'blessing-item';
       div.style.animationDelay = (index * 0.05) + 's';
-      div.innerHTML = `
-        <div class="blessing-header">
-          <span class="blessing-name">${escapeHtml(item.author_name)}</span>
-          <span class="blessing-time">${timeStr}</span>
-        </div>
-        <p class="blessing-content">${escapeHtml(item.message)}</p>
-      `;
+      div.innerHTML = `<div class="blessing-header"><span class="blessing-name">${escapeHtml(item.author_name)}</span><span class="blessing-time">${timeStr}</span></div><p class="blessing-content">${escapeHtml(item.message)}</p>`;
       blessingsList.appendChild(div);
     });
   } catch (err) {
-    blessingsList.innerHTML = `
-      <div class="empty-state">
-        <p>加载失败，请检查网络连接</p>
-      </div>`;
+    blessingsList.innerHTML = '<div class="empty-state"><p>加载失败，请检查网络连接</p></div>';
   }
 }
 
@@ -250,10 +279,7 @@ blessingForm.addEventListener('submit', async (e) => {
   const btnText = btn.querySelector('.btn-text');
   const btnLoader = btn.querySelector('.btn-loader');
 
-  if (!author_name || !message) {
-    showToast('请填写姓名和祝福内容', '⚠️');
-    return;
-  }
+  if (!author_name || !message) { showToast('请填写姓名和祝福内容', '⚠️'); return; }
 
   btn.disabled = true;
   btnText.style.display = 'none';
@@ -261,12 +287,10 @@ blessingForm.addEventListener('submit', async (e) => {
 
   try {
     const res = await fetch('/api/blessings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ author_name, message })
     });
     const data = await res.json();
-
     if (data.success) {
       showToast('祝福发送成功！', '✅');
       blessingForm.reset();
@@ -286,48 +310,227 @@ blessingForm.addEventListener('submit', async (e) => {
 
 refreshBtn.addEventListener('click', () => {
   refreshBtn.classList.add('spinning');
-  loadBlessings().then(() => {
-    setTimeout(() => refreshBtn.classList.remove('spinning'), 500);
-  });
+  loadBlessings().then(() => setTimeout(() => refreshBtn.classList.remove('spinning'), 500));
 });
 
-// 字符计数
 document.getElementById('b-content').addEventListener('input', function() {
   document.getElementById('char-count').textContent = this.value.length;
 });
 
-// 初始加载
 loadBlessings();
 
-// ===== 模态框 =====
+// ===== 提交建议 =====
+const suggestForm = document.getElementById('suggest-form');
+if (suggestForm) {
+  suggestForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const author_name = document.getElementById('s-name').value.trim();
+    const contact = document.getElementById('s-contact').value.trim();
+    const content = document.getElementById('s-content').value.trim();
+    const btn = document.getElementById('s-submit-btn');
+    const btnText = btn.querySelector('.btn-text');
+    const btnLoader = btn.querySelector('.btn-loader');
+
+    if (!author_name || !content) { showToast('请填写姓名和建议内容', '⚠️'); return; }
+
+    btn.disabled = true;
+    btnText.style.display = 'none';
+    btnLoader.style.display = 'block';
+
+    try {
+      const res = await fetch('/api/suggestions', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ author_name, contact, content })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('建议提交成功！感谢您的反馈', '✅');
+        suggestForm.reset();
+        document.getElementById('s-char-count').textContent = '0';
+        closeSuggest();
+      } else {
+        showToast(data.error || '提交失败', '❌');
+      }
+    } catch (err) {
+      showToast('网络错误，请稍后重试', '❌');
+    } finally {
+      btn.disabled = false;
+      btnText.style.display = 'block';
+      btnLoader.style.display = 'none';
+    }
+  });
+
+  document.getElementById('s-content').addEventListener('input', function() {
+    document.getElementById('s-char-count').textContent = this.value.length;
+  });
+}
+
+// ===== 模态框管理 =====
+const modalOverlay = document.getElementById('modal-overlay');
+const suggestOverlay = document.getElementById('suggest-overlay');
+const changelogOverlay = document.getElementById('changelog-overlay');
+const adminLoginOverlay = document.getElementById('admin-login-overlay');
+const adminPanelOverlay = document.getElementById('admin-panel-overlay');
+
+function openModal(el) { if(el) { el.classList.add('active'); document.body.style.overflow = 'hidden'; } }
+function closeModal(el) { if(el) { el.classList.remove('active'); document.body.style.overflow = ''; } }
+
+// 更多
 const moreBtn = document.getElementById('more-btn');
 const navMore = document.getElementById('nav-more');
-const modalOverlay = document.getElementById('modal-overlay');
-const modalClose = document.getElementById('modal-close');
+if (moreBtn) moreBtn.addEventListener('click', () => openModal(modalOverlay));
+if (navMore) navMore.addEventListener('click', (e) => { e.preventDefault(); openModal(modalOverlay); });
+document.getElementById('modal-close').addEventListener('click', () => closeModal(modalOverlay));
+modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) closeModal(modalOverlay); });
 
-function openModal() {
-  modalOverlay.classList.add('active');
-  document.body.style.overflow = 'hidden';
+// 提交建议
+const btnSuggest = document.getElementById('btn-suggest');
+if (btnSuggest) btnSuggest.addEventListener('click', () => { closeModal(modalOverlay); openModal(suggestOverlay); });
+document.getElementById('suggest-close').addEventListener('click', () => closeModal(suggestOverlay));
+suggestOverlay.addEventListener('click', (e) => { if (e.target === suggestOverlay) closeModal(suggestOverlay); });
+
+function closeSuggest() { closeModal(suggestOverlay); }
+
+// 更新日志
+const btnChangelog = document.getElementById('btn-changelog');
+if (btnChangelog) btnChangelog.addEventListener('click', () => { closeModal(modalOverlay); openModal(changelogOverlay); });
+document.getElementById('changelog-close').addEventListener('click', () => closeModal(changelogOverlay));
+changelogOverlay.addEventListener('click', (e) => { if (e.target === changelogOverlay) closeModal(changelogOverlay); });
+
+// 后台登录
+const btnAdmin = document.getElementById('btn-admin');
+if (btnAdmin) btnAdmin.addEventListener('click', () => { closeModal(modalOverlay); openModal(adminLoginOverlay); });
+document.getElementById('admin-login-close').addEventListener('click', () => closeModal(adminLoginOverlay));
+adminLoginOverlay.addEventListener('click', (e) => { if (e.target === adminLoginOverlay) closeModal(adminLoginOverlay); });
+
+// 后台面板
+document.getElementById('admin-panel-close').addEventListener('click', () => closeModal(adminPanelOverlay));
+adminPanelOverlay.addEventListener('click', (e) => { if (e.target === adminPanelOverlay) closeModal(adminPanelOverlay); });
+
+// 登录表单
+const adminLoginForm = document.getElementById('admin-login-form');
+if (adminLoginForm) {
+  adminLoginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('admin-user').value.trim();
+    const password = document.getElementById('admin-pass').value;
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if (data.success) {
+        localStorage.setItem('adminToken', data.token);
+        closeModal(adminLoginOverlay);
+        openModal(adminPanelOverlay);
+        loadAdminData();
+        startOnlinePolling();
+      } else {
+        showToast(data.error || '登录失败', '❌');
+      }
+    } catch (err) {
+      showToast('网络错误', '❌');
+    }
+  });
 }
 
-function closeModal() {
-  modalOverlay.classList.remove('active');
-  document.body.style.overflow = '';
+// ===== 后台管理 =====
+let adminToken = localStorage.getItem('adminToken') || '';
+
+async function loadAdminData() {
+  if (!adminToken) return;
+  try {
+    const bRes = await fetch('/api/admin/blessings', { headers: { 'x-admin-token': adminToken } });
+    const bData = await bRes.json();
+    const bBody = document.getElementById('admin-blessings-body');
+    if (bData.success && bData.data.length > 0) {
+      document.getElementById('stat-blessings').textContent = bData.data.length;
+      bBody.innerHTML = bData.data.map(item => {
+        const time = formatChinaDateShort(item.created_at);
+        return `<tr><td>${item.id}</td><td>${escapeHtml(item.author_name)}</td><td>${escapeHtml(item.message)}</td><td>${time}</td><td><button class="admin-del-btn" data-id="${item.id}" data-type="blessings">删除</button></td></tr>`;
+      }).join('');
+      bBody.querySelectorAll('.admin-del-btn').forEach(btn => {
+        btn.addEventListener('click', () => deleteItem(btn.dataset.id, btn.dataset.type));
+      });
+    } else {
+      bBody.innerHTML = '<tr><td colspan="5" class="admin-empty">暂无祝福</td></tr>';
+    }
+
+    const sRes = await fetch('/api/admin/suggestions', { headers: { 'x-admin-token': adminToken } });
+    const sData = await sRes.json();
+    const sBody = document.getElementById('admin-suggestions-body');
+    if (sData.success && sData.data.length > 0) {
+      document.getElementById('stat-suggestions').textContent = sData.data.length;
+      sBody.innerHTML = sData.data.map(item => {
+        const time = formatChinaDateShort(item.created_at);
+        return `<tr><td>${item.id}</td><td>${escapeHtml(item.author_name)}</td><td>${escapeHtml(item.contact || '-')}</td><td>${escapeHtml(item.content)}</td><td>${time}</td><td><button class="admin-del-btn" data-id="${item.id}" data-type="suggestions">删除</button></td></tr>`;
+      }).join('');
+      sBody.querySelectorAll('.admin-del-btn').forEach(btn => {
+        btn.addEventListener('click', () => deleteItem(btn.dataset.id, btn.dataset.type));
+      });
+    } else {
+      sBody.innerHTML = '<tr><td colspan="6" class="admin-empty">暂无建议</td></tr>';
+    }
+  } catch (err) {
+    showToast('加载管理数据失败', '❌');
+  }
 }
 
-moreBtn.addEventListener('click', openModal);
-navMore.addEventListener('click', (e) => {
-  e.preventDefault();
-  openModal();
+async function deleteItem(id, type) {
+  if (!confirm('确定要删除吗？')) return;
+  try {
+    const res = await fetch(`/api/admin/${type}/${id}`, {
+      method: 'DELETE', headers: { 'x-admin-token': adminToken }
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('删除成功', '✅');
+      loadAdminData();
+      loadBlessings();
+    } else {
+      showToast(data.error || '删除失败', '❌');
+    }
+  } catch (err) {
+    showToast('删除失败', '❌');
+  }
+}
+
+document.querySelectorAll('.admin-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+  });
 });
 
-modalClose.addEventListener('click', closeModal);
-modalOverlay.addEventListener('click', (e) => {
-  if (e.target === modalOverlay) closeModal();
-});
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') closeModal();
-});
+// ===== 在线人数 =====
+async function updateOnline() {
+  try {
+    const res = await fetch('/api/online');
+    const data = await res.json();
+    const el = document.getElementById('stat-online');
+    if (el) el.textContent = data.count;
+  } catch (e) {}
+}
+
+function startOnlinePolling() {
+  updateOnline();
+  setInterval(updateOnline, 10000);
+}
+
+// 前台定期 ping（带 clientToken）
+async function sendPing() {
+  try {
+    await fetch('/api/ping', {
+      method: 'POST',
+      headers: { 'x-client-token': clientToken }
+    });
+  } catch (e) {}
+}
+sendPing();
+setInterval(sendPing, 15000);
 
 // ===== Toast =====
 function showToast(msg, icon = '✅') {
@@ -341,50 +544,37 @@ function showToast(msg, icon = '✅') {
 // ===== 移动端菜单 =====
 const navToggle = document.querySelector('.nav-toggle');
 const navMenu = document.querySelector('.nav-menu');
+if (navToggle) {
+  navToggle.addEventListener('click', () => {
+    navMenu.classList.toggle('active');
+    const spans = navToggle.querySelectorAll('span');
+    if (navMenu.classList.contains('active')) {
+      spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
+      spans[1].style.opacity = '0';
+      spans[2].style.transform = 'rotate(-45deg) translate(5px, -5px)';
+    } else {
+      spans[0].style.transform = '';
+      spans[1].style.opacity = '1';
+      spans[2].style.transform = '';
+    }
+  });
+}
 
-navToggle.addEventListener('click', () => {
-  navMenu.classList.toggle('active');
-  const spans = navToggle.querySelectorAll('span');
-  if (navMenu.classList.contains('active')) {
-    spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
-    spans[1].style.opacity = '0';
-    spans[2].style.transform = 'rotate(-45deg) translate(5px, -5px)';
-  } else {
-    spans[0].style.transform = '';
-    spans[1].style.opacity = '1';
-    spans[2].style.transform = '';
-  }
-});
-
-// 点击菜单项后关闭
 navMenu.querySelectorAll('a').forEach(a => {
   a.addEventListener('click', () => {
     navMenu.classList.remove('active');
-    navToggle.querySelectorAll('span').forEach(s => {
-      s.style.transform = '';
-      s.style.opacity = '1';
-    });
+    navToggle.querySelectorAll('span').forEach(s => { s.style.transform = ''; s.style.opacity = '1'; });
   });
 });
 
 // ===== 滚动显示动画 =====
 const revealElements = document.querySelectorAll('.section-header, .player-card, .blessing-form-card, .blessings-list-card, .history-card');
 const revealObserver = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      entry.target.classList.add('visible');
-      revealObserver.unobserve(entry.target);
-    }
-  });
+  entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('visible'); revealObserver.unobserve(entry.target); } });
 }, { threshold: 0.1 });
-
-revealElements.forEach(el => {
-  el.classList.add('reveal');
-  revealObserver.observe(el);
-});
+revealElements.forEach(el => { el.classList.add('reveal'); revealObserver.observe(el); });
 
 // ===== 导航栏滚动效果 =====
-let lastScroll = 0;
 window.addEventListener('scroll', () => {
   const navbar = document.querySelector('.navbar');
   const currentScroll = window.pageYOffset;
@@ -395,5 +585,4 @@ window.addEventListener('scroll', () => {
     navbar.style.background = 'rgba(255, 255, 255, 0.85)';
     navbar.style.boxShadow = 'none';
   }
-  lastScroll = currentScroll;
 });

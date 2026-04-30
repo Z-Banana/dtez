@@ -1528,3 +1528,230 @@ body::before {
   opacity: 1;
   transform: translateY(0);
 }
+
+
+/* ===== 模态框操作按钮 ===== */
+.modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin: 8px 0;
+}
+
+.modal-action-btn {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #fff;
+  border: none;
+  border-radius: 100px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  letter-spacing: 1px;
+}
+
+.modal-action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(212, 56, 13, 0.2);
+}
+
+/* ===== 更新日志 ===== */
+.changelog-list {
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.changelog-item {
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+
+.changelog-item:last-child {
+  border-bottom: none;
+}
+
+.changelog-version {
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 1rem;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.changelog-date {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  font-weight: 400;
+}
+
+.changelog-item ul {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--text-sub);
+  font-size: 0.9rem;
+  line-height: 1.8;
+}
+
+.changelog-item li {
+  margin-bottom: 4px;
+}
+
+/* ===== 后台管理 ===== */
+.admin-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.admin-stat-card {
+  background: linear-gradient(135deg, rgba(212, 56, 13, 0.06), rgba(250, 173, 20, 0.04));
+  border: 1px solid rgba(212, 56, 13, 0.1);
+  border-radius: var(--radius-sm);
+  padding: 20px;
+  text-align: center;
+  transition: var(--transition);
+}
+
+.admin-stat-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(212, 56, 13, 0.2);
+}
+
+.admin-stat-num {
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--primary);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.admin-stat-label {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+}
+
+.admin-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  padding-bottom: 8px;
+}
+
+.admin-tab {
+  padding: 10px 24px;
+  background: none;
+  border: none;
+  border-radius: 100px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-sub);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.admin-tab.active {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #fff;
+}
+
+.admin-tab:hover:not(.active) {
+  background: rgba(212, 56, 13, 0.06);
+  color: var(--primary);
+}
+
+.admin-tab-content {
+  display: none;
+}
+
+.admin-tab-content.active {
+  display: block;
+}
+
+.admin-table-wrap {
+  max-height: 350px;
+  overflow-y: auto;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(0,0,0,0.06);
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.admin-table th {
+  background: rgba(212, 56, 13, 0.06);
+  padding: 12px 14px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-main);
+  position: sticky;
+  top: 0;
+}
+
+.admin-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+  color: var(--text-sub);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-table tr:hover td {
+  background: rgba(212, 56, 13, 0.02);
+}
+
+.admin-empty {
+  text-align: center;
+  color: var(--text-dim);
+  padding: 40px;
+}
+
+.admin-del-btn {
+  padding: 6px 14px;
+  background: #ff4d4f;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.admin-del-btn:hover {
+  background: #cf1322;
+  transform: scale(1.05);
+}
+
+@media (max-width: 640px) {
+  .admin-stats {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .admin-stat-card {
+    padding: 14px 8px;
+  }
+  .admin-stat-num {
+    font-size: 1.4rem;
+  }
+  .admin-table th,
+  .admin-table td {
+    padding: 8px 10px;
+    font-size: 0.75rem;
+  }
+  .admin-table td {
+    max-width: 100px;
+  }
+}
