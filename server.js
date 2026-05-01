@@ -67,9 +67,11 @@ app.get('/api/online', (req, res) => {
 });
 
 app.post('/api/ping', (req, res) => {
-  // 用 IP 作为唯一标识，避免一个浏览器产生多个 token
+  // 用 User-Agent + 简单指纹区分不同用户（避免代理后IP相同）
+  const ua = req.headers['user-agent'] || '';
   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
-  onlineIPs.set(ip, Date.now());
+  const key = ip + '|' + ua.slice(0, 50);
+  onlineIPs.set(key, Date.now());
   res.json({ ok: true });
 });
 
@@ -96,12 +98,13 @@ app.post('/api/blessings', async (req, res) => {
   if (author_name.length > 20 || message.length > 200) return res.status(400).json({ success: false, error: '超限' });
   try {
     // 使用北京时间（UTC+8）
+    // 获取北京时间
     const now = new Date();
-    const bjTime = new Date(now.getTime() + 8 * 60 * 60 * 1000);
-    const timeStr = bjTime.toISOString().replace('T', ' ').slice(0, 19);
+    const bjTimeStr = new Date(now.getTime() + now.getTimezoneOffset() * 60000 + 8 * 3600000)
+      .toISOString().replace('T', ' ').slice(0, 19);
     await client.execute({
       sql: 'INSERT INTO blessings (author_name, message, created_at) VALUES (?, ?, ?)',
-      args: [author_name.trim(), message.trim(), timeStr]
+      args: [author_name.trim(), message.trim(), bjTimeStr]
     });
     res.json({ success: true, message: '祝福发送成功！' });
   } catch (err) {
@@ -126,12 +129,13 @@ app.post('/api/suggestions', async (req, res) => {
   if (!author_name || !content) return res.status(400).json({ success: false, error: '姓名和建议内容不能为空' });
   if (author_name.length > 20 || content.length > 500) return res.status(400).json({ success: false, error: '姓名不超过20字，建议不超过500字' });
   try {
+    // 获取北京时间
     const now = new Date();
-    const bjTime = new Date(now.getTime() + 8 * 60 * 60 * 1000);
-    const timeStr = bjTime.toISOString().replace('T', ' ').slice(0, 19);
+    const bjTimeStr = new Date(now.getTime() + now.getTimezoneOffset() * 60000 + 8 * 3600000)
+      .toISOString().replace('T', ' ').slice(0, 19);
     await client.execute({
       sql: 'INSERT INTO suggestions (author_name, contact, content, created_at) VALUES (?, ?, ?, ?)',
-      args: [author_name.trim(), (contact || '').trim(), content.trim(), timeStr]
+      args: [author_name.trim(), contact ? contact.trim() : '', content.trim(), bjTimeStr]
     });
     res.json({ success: true, message: '建议提交成功！感谢您的反馈' });
   } catch (err) {
